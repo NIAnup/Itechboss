@@ -1,10 +1,139 @@
 # VAULT — Secure Session & Encrypted Storage Demo
 
-A production-ready Flutter application built for the **Secure Session & Encrypted Storage** assignment. Integrates with the public DummyJSON Auth API and demonstrates hardened local cryptography, single-flight token interceptor management, PBKDF2 PIN app lock, root/jailbreak detection, and anti-screenshot privacy protection.
+A production-grade Flutter application built for the **Secure Session & Encrypted Storage** assignment. Integrates with the public DummyJSON Auth API and demonstrates hardened local cryptography, single-flight token interceptor management, PBKDF2 PIN app lock, root/jailbreak detection, and anti-screenshot privacy protection.
 
 ---
 
-## 1. Architecture (MVVM + 3-Layer Clean Architecture)
+## 1. Prerequisites & Environment Setup
+
+### Required Toolchain Versions
+- **Flutter SDK**: `3.29.3` (Channel `stable`)
+- **Dart SDK**: `3.7.2` (`sdk: ^3.7.2` in `pubspec.yaml`)
+- **CocoaPods**: `1.16.2+` (for iOS / macOS pods)
+- **Java**: OpenJDK `17+`
+- **Xcode**: `15.0+` (for iOS / macOS builds)
+- **Android Studio / SDK**: Android API level 21+ (Min SDK 21, Target SDK 34)
+
+---
+
+## 2. Installation & Getting Started
+
+### Step 1: Verify Flutter Environment
+Ensure that Flutter 3.29.3 is properly installed and added to your `PATH`:
+```bash
+flutter --version
+flutter doctor -v
+```
+
+> [!TIP]
+> If you are using `fvm` (Flutter Version Management):
+> ```bash
+> fvm use 3.29.3
+> ```
+
+### Step 2: Clone & Navigate to Project
+```bash
+git clone <repository-url>
+cd project
+```
+
+### Step 3: Install Dependencies
+Fetch all required Dart and Flutter dependencies:
+```bash
+flutter pub get
+```
+
+### Step 4: iOS & macOS Pod Installation (Apple platforms only)
+If developing on macOS for iOS or macOS Desktop targets:
+```bash
+# For iOS
+cd ios && pod install && cd ..
+
+# For macOS
+cd macos && pod install && cd ..
+```
+
+---
+
+## 3. Running the Application
+
+### List Connected Devices & Simulators
+```bash
+flutter devices
+```
+
+### Run in Debug Mode
+Select your target device or let Flutter auto-detect:
+```bash
+# Auto-detect target device
+flutter run
+
+# Run on Android emulator / physical device
+flutter run -d android
+
+# Run on iOS Simulator / physical device
+flutter run -d ios
+
+# Run on macOS Desktop
+flutter run -d macos
+```
+
+### Run in Release / Profile Mode
+```bash
+flutter run --release
+# or
+flutter run --profile
+```
+
+### Building Application Bundles
+
+#### Android
+```bash
+# Build APK
+flutter build apk --release
+
+# Build App Bundle (AAB)
+flutter build appbundle --release
+```
+
+#### iOS
+```bash
+flutter build ipa --release
+```
+
+#### macOS Desktop
+```bash
+flutter build macos --release
+```
+
+---
+
+## 4. Automated Tests & Static Analysis
+
+### Run Unit Test Suite
+The test suite in `test/vault_security_test.dart` covers mandatory assignment test cases:
+1. **AES Round-Trip & Nonce Uniqueness**: Verifies AES-256-GCM encryption/decryption round-trip, tag verification on tampered data, and asserts that two encryptions of identical payloads produce unique ciphertexts.
+2. **PIN Verification**: Verifies correct PIN passes, wrong PIN fails, and stored hash is neither raw PIN nor unsalted SHA-256 (PBKDF2-HMAC-SHA256 with 100k iterations).
+3. **Single-Flight 401 Interceptor**: Simulates concurrent 401 requests and asserts exactly 1 `/auth/refresh` call is made before retrying and resolving all queued requests.
+
+```bash
+flutter test
+```
+
+### Run Dart Analyzer & Code Quality Checks
+```bash
+# Analyze code for warnings and lint errors
+dart analyze
+# or
+flutter analyze
+
+# Verify code formatting
+dart format --output=none --set-exit-if-changed .
+```
+
+---
+
+## 5. Architecture (MVVM + 3-Layer Clean Architecture)
 
 The codebase strictly enforces clean separation of concerns across three distinct layers:
 
@@ -50,7 +179,7 @@ lib/
 
 ---
 
-## 2. Security Highlights
+## 6. Security Highlights
 
 ### Authenticated Encrypted Cache (AES-256-GCM)
 * **Master Key**: Random 256-bit key dynamically generated on first launch using `Random.secure()` and securely stored in hardware-backed KeyStore/Keychain via `flutter_secure_storage`.
@@ -75,26 +204,7 @@ lib/
 
 ---
 
-## 3. Automated Unit Tests (Exactly 3 Tests)
-
-The test suite in `test/vault_security_test.dart` covers the 3 mandatory assignment test cases:
-1. **AES Round-Trip & Nonce Uniqueness**: Verifies encryption/decryption round-trip, tag verification on tampered data, and asserts that two encryptions of identical payloads differ.
-2. **PIN Verification**: Verifies correct PIN passes, wrong PIN fails, and stored hash is neither raw PIN nor unsalted SHA-256.
-3. **Single-Flight 401 Interceptor**: Simulates 3 concurrent requests returning 401 and asserts exactly 1 `/auth/refresh` call is made before retrying and resolving all 3 requests.
-
-Run tests:
-```bash
-flutter test
-```
-
-Run analyzer:
-```bash
-dart analyze
-```
-
----
-
-## 4. Declaration
+## 7. Declaration
 
 No generative AI was used in this submission.
 Signed: Anup Singh, 2026-09-10
