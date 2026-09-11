@@ -1,0 +1,74 @@
+================================================================================
+VAULT: SECURE SESSION & ENCRYPTED STORAGE — TESTING & SECURITY GUIDELINES
+================================================================================
+
+1. TEST CREDENTIALS (DUMMYJSON AUTH API)
+--------------------------------------------------------------------------------
+- Username:  emilys
+- Password:  emilyspass
+- Endpoint:  https://dummyjson.com/auth/login (Body: expiresInMins: 1)
+
+--------------------------------------------------------------------------------
+2. SECURITY PERIMETER & DEVICE REQUIREMENTS
+--------------------------------------------------------------------------------
+A. Root / Jailbreak Detection:
+   - The app verifies device integrity on startup.
+   - If executed on a rooted Android device (e.g. Magisk, SuperSU) or jailbroken
+     iOS device (e.g. Cydia, Sileo), a "Security Alert" screen will appear,
+     halting execution to prevent memory dump and key theft.
+   - For standard physical devices or emulators, ensure standard OS build.
+
+B. Anti-Screenshot & Screen Recording Protection (Android & iOS):
+   - Android: Native WindowManager.LayoutParams.FLAG_SECURE is enforced.
+     Taking screenshots, screen recordings, or sharing the screen will produce
+     a black screen by design.
+   - iOS: App-Switcher privacy blur protects profile information and PIN inputs
+     from background task snapshots.
+
+C. 6-Digit PIN Security & Attempt Limits:
+   - Entered via our custom on-screen keypad (no system keyboard).
+   - Stored as a PBKDF2-HMAC-SHA256 derived hash with a 16-byte random salt and
+     100,000 iterations.
+   - Verified in constant-time (timing-attack resistant).
+   - Attempt Limiting: 3 consecutive wrong PIN entries will trigger a complete
+     wipe of all local credentials, tokens, and encrypted cache files, redirecting
+     to the Login screen.
+
+--------------------------------------------------------------------------------
+3. TOKEN LIFECYCLE & 1-MINUTE EXPIRY DEMO
+--------------------------------------------------------------------------------
+- The access token is issued with `expiresInMins: 1`.
+- Exactly 60 seconds after logging in, GET /auth/me will return 401 Unauthorized.
+- When you perform an action (like pull-to-refresh or navigation):
+  1. The AuthInterceptor intercepts the 401 response.
+  2. Single-Flight Lock: Exactly ONE call to POST /auth/refresh is dispatched.
+  3. All concurrent requests wait in a queue for the new token.
+  4. The request retries automatically without interrupting the user session.
+  5. The green session chip timer resets.
+
+--------------------------------------------------------------------------------
+4. OFFLINE CACHED MODE (AES-256-GCM)
+--------------------------------------------------------------------------------
+- Once logged in, the profile payload is saved to disk encrypted using AES-256-GCM.
+- Encryption Key: 256-bit cryptographically secure random key in KeyStore/Keychain.
+- Nonce/IV: Fresh 12-byte random nonce generated on every single disk write.
+- How to test:
+  1. Log in while online to write the initial encrypted cache.
+  2. Turn on Airplane Mode (disable Wi-Fi & Cellular).
+  3. Pull down to refresh.
+  4. Notice the Amber top banner: "Offline — showing the copy saved on this device."
+     and the badge: "🔒 Decrypted from local cache".
+  5. Turn off Airplane Mode and tap "Try again" to resume live online session.
+
+--------------------------------------------------------------------------------
+5. HOW TO RUN TESTS & VERIFY CODE QUALITY
+--------------------------------------------------------------------------------
+Run the 3 automated unit tests:
+  $ flutter test
+
+Verify zero linter issues:
+  $ dart analyze
+
+Build Debug APK:
+  $ flutter build apk --debug
+================================================================================

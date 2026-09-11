@@ -199,8 +199,13 @@ lib/
 * If refresh fails, wipes all credentials and routes to the Login screen.
 
 ### Root / Jailbreak & Anti-Screenshot Protection
-* Detects rooted/jailbroken devices on startup and blocks access.
-* Disables screenshot and screen recording capture (`FLAG_SECURE` on Android) and blurs task snapshots in the iOS App Switcher.
+* Detects genuinely rooted/jailbroken devices on startup and displays a security alert screen to prevent secret dumping.
+* Enforces `FLAG_SECURE` on Android (blocking screenshots and screen mirroring) and task switcher privacy blur on iOS.
+* Refer to [INSTRUCTIONS.txt](file:///Users/anupsingh/Downloads/project/INSTRUCTIONS.txt) for detailed device testing notes.
+
+### Platform Network Permissions
+* **Android**: `android.permission.INTERNET` and `android.permission.ACCESS_NETWORK_STATE` in [AndroidManifest.xml](file:///Users/anupsingh/Downloads/project/android/app/src/main/AndroidManifest.xml).
+* **iOS**: `NSAppTransportSecurity` in [Info.plist](file:///Users/anupsingh/Downloads/project/ios/Runner/Info.plist).
 
 ---
 
