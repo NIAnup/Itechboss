@@ -55,9 +55,10 @@ class PinCubit extends Cubit<PinState> {
   }
 
   Future<void> _processCompleteInput(String input) async {
+    emit(state.copyWith(isProcessing: true));
     try {
       // Smooth micro-delay so the 6th filled dot is rendered before transitioning
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(const Duration(milliseconds: 120));
 
       if (state.flowMode == PinFlowMode.unlock) {
         final result = await _pinRepository.verifyPin(input);

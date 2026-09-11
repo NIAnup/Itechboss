@@ -13,6 +13,7 @@ class PinState extends Equatable {
   final bool isCompleted;
   final bool isUnlocked;
   final bool isLockedOut;
+  final bool isProcessing;
 
   const PinState({
     this.flowMode = PinFlowMode.create,
@@ -25,6 +26,7 @@ class PinState extends Equatable {
     this.isCompleted = false,
     this.isUnlocked = false,
     this.isLockedOut = false,
+    this.isProcessing = false,
   });
 
   PinState copyWith({
@@ -38,6 +40,7 @@ class PinState extends Equatable {
     bool? isCompleted,
     bool? isUnlocked,
     bool? isLockedOut,
+    bool? isProcessing,
   }) {
     return PinState(
       flowMode: flowMode ?? this.flowMode,
@@ -50,6 +53,7 @@ class PinState extends Equatable {
       isCompleted: isCompleted ?? this.isCompleted,
       isUnlocked: isUnlocked ?? this.isUnlocked,
       isLockedOut: isLockedOut ?? this.isLockedOut,
+      isProcessing: isProcessing ?? this.isProcessing,
     );
   }
 
@@ -65,5 +69,6 @@ class PinState extends Equatable {
         isCompleted,
         isUnlocked,
         isLockedOut,
+        isProcessing,
       ];
 }

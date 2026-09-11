@@ -1,13 +1,18 @@
 import 'dart:convert';
-import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:pointycastle/export.dart';
+import 'package:cryptography/cryptography.dart' as crypto_pkg;
 
 class PinHasher {
   static const int saltLength = 16; // 16 bytes random salt
   static const int iterations = 100000; // >= 100,000 iterations
   static const int keyLength = 32; // 256-bit hash (32 bytes)
+
+  final crypto_pkg.Pbkdf2 _pbkdf2 = crypto_pkg.Pbkdf2(
+    macAlgorithm: crypto_pkg.Hmac.sha256(),
+    iterations: iterations,
+    bits: keyLength * 8,
+  );
 
   /// Generates a cryptographically secure 16-byte random salt
   static Uint8List generateRandomSalt() {
@@ -19,20 +24,18 @@ class PinHasher {
     return salt;
   }
 
-  /// Hashes a 6-digit PIN using PBKDF2-HMAC-SHA256 with 100,000 iterations in a worker isolate
+  /// Hashes a 6-digit PIN using PBKDF2-HMAC-SHA256 with 100,000 iterations
   Future<Uint8List> hashPin({
     required String pin,
     required Uint8List salt,
   }) async {
-    return Isolate.run(() {
-      final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2')
-        ..init(Pbkdf2Parameters(salt, iterations, keyLength));
-
-      final pinBytes = Uint8List.fromList(utf8.encode(pin));
-      final derivedKey = derivator.process(pinBytes);
-
-      return Uint8List.fromList(derivedKey);
-    });
+    final secretKey = crypto_pkg.SecretKey(utf8.encode(pin));
+    final newSecretKey = await _pbkdf2.deriveKey(
+      secretKey: secretKey,
+      nonce: salt,
+    );
+    final bytes = await newSecretKey.extractBytes();
+    return Uint8List.fromList(bytes);
   }
 
   /// Verifies a PIN against stored salt and hash in constant time
