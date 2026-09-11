@@ -63,13 +63,14 @@ class PinCubit extends Cubit<PinState> {
       if (state.flowMode == PinFlowMode.unlock) {
         final result = await _pinRepository.verifyPin(input);
         if (result == PinVerificationResult.success) {
-          emit(state.copyWith(isUnlocked: true));
+          emit(state.copyWith(isUnlocked: true, isProcessing: false));
         } else if (result == PinVerificationResult.lockedOut) {
           emit(state.copyWith(
             currentInput: '',
             hasError: true,
             isLockedOut: true,
             remainingAttempts: 0,
+            isProcessing: false,
             errorMessage: 'Too many incorrect attempts. Session terminated.',
           ));
         } else {
@@ -79,6 +80,7 @@ class PinCubit extends Cubit<PinState> {
             currentInput: '',
             hasError: true,
             remainingAttempts: remaining,
+            isProcessing: false,
             errorMessage: 'Incorrect PIN — $attemptsText',
           ));
         }
@@ -92,6 +94,7 @@ class PinCubit extends Cubit<PinState> {
             firstPinInput: '',
             hasError: false,
             errorMessage: null,
+            isProcessing: false,
           ));
         } else if (result == PinVerificationResult.lockedOut) {
           emit(state.copyWith(
@@ -99,6 +102,7 @@ class PinCubit extends Cubit<PinState> {
             hasError: true,
             isLockedOut: true,
             remainingAttempts: 0,
+            isProcessing: false,
             errorMessage: 'Too many incorrect attempts. Session terminated.',
           ));
         } else {
@@ -107,6 +111,7 @@ class PinCubit extends Cubit<PinState> {
             currentInput: '',
             hasError: true,
             remainingAttempts: remaining,
+            isProcessing: false,
             errorMessage: 'Incorrect current PIN. Try again.',
           ));
         }
@@ -118,18 +123,20 @@ class PinCubit extends Cubit<PinState> {
           currentInput: '',
           hasError: false,
           errorMessage: null,
+          isProcessing: false,
         ));
       } else if (state.step == 2) {
         // Step 2: Confirm PIN
         if (input == state.firstPinInput) {
           await _pinRepository.savePin(input);
-          emit(state.copyWith(isCompleted: true));
+          emit(state.copyWith(isCompleted: true, isProcessing: false));
         } else {
           emit(state.copyWith(
             step: 1,
             firstPinInput: '',
             currentInput: '',
             hasError: true,
+            isProcessing: false,
             errorMessage: 'PINs do not match. Try again.',
           ));
         }
@@ -138,6 +145,7 @@ class PinCubit extends Cubit<PinState> {
       emit(state.copyWith(
         currentInput: '',
         hasError: true,
+        isProcessing: false,
         errorMessage: 'An error occurred. Please try again.',
       ));
     }

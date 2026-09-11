@@ -124,31 +124,8 @@ class _SetPinViewState extends State<_SetPinView> {
 
                         const SizedBox(height: 20),
 
-                        // Step Status, Processing Loader, or Error message
-                        if (state.isProcessing)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.primaryNavy,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                state.step == 2 ? 'Securing PIN...' : 'Verifying PIN...',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primaryNavy,
-                                ),
-                              ),
-                            ],
-                          )
-                        else if (state.hasError && state.errorMessage != null)
+                        // Step Status or Error message
+                        if (state.hasError && state.errorMessage != null)
                           Text(
                             state.errorMessage!,
                             textAlign: TextAlign.center,
