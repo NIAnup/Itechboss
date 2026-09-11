@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/datasources/secure_storage_datasource.dart';
+import '../../domain/repositories/pin_repository.dart';
+import '../viewmodels/pin/pin_cubit.dart';
 import '../views/pin/pin_lock_screen.dart';
 
 class AppLifecyclePinBarrier extends StatefulWidget {
@@ -50,26 +52,50 @@ class _AppLifecyclePinBarrierState extends State<AppLifecyclePinBarrier>
           _isLocked = true;
         });
       }
+    } catch (e) {
+      debugPrint('Error checking PIN lock status on background: $e');
     } finally {
       _isChecking = false;
     }
   }
 
   void _onUnlocked() {
-    setState(() {
-      _isLocked = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLocked = false;
+      });
+    }
+  }
+
+  void _onLogout() {
+    if (mounted) {
+      setState(() {
+        _isLocked = false;
+      });
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLocked) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: Theme.of(context),
-        home: PinLockScreen(onUnlocked: _onUnlocked),
-      );
-    }
-    return widget.child;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.child,
+        if (_isLocked)
+          Positioned.fill(
+            child: Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: BlocProvider<PinCubit>(
+                create: (ctx) => PinCubit(ctx.read<PinRepository>()),
+                child: PinLockScreen(
+                  onUnlocked: _onUnlocked,
+                  onLogout: _onLogout,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

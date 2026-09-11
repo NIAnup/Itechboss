@@ -37,7 +37,7 @@ class PinCubit extends Cubit<PinState> {
 
     if (newInput.length == 6) {
       _isProcessing = true;
-      _processCompleteInput(newInput).then((_) {
+      _processCompleteInput(newInput).whenComplete(() {
         _isProcessing = false;
       });
     }
@@ -55,82 +55,90 @@ class PinCubit extends Cubit<PinState> {
   }
 
   Future<void> _processCompleteInput(String input) async {
-    // Smooth delay so the 6th filled dot is rendered before transitioning
-    await Future.delayed(const Duration(milliseconds: 150));
+    try {
+      // Smooth micro-delay so the 6th filled dot is rendered before transitioning
+      await Future.delayed(const Duration(milliseconds: 150));
 
-    if (state.flowMode == PinFlowMode.unlock) {
-      final result = await _pinRepository.verifyPin(input);
-      if (result == PinVerificationResult.success) {
-        emit(state.copyWith(isUnlocked: true));
-      } else if (result == PinVerificationResult.lockedOut) {
+      if (state.flowMode == PinFlowMode.unlock) {
+        final result = await _pinRepository.verifyPin(input);
+        if (result == PinVerificationResult.success) {
+          emit(state.copyWith(isUnlocked: true));
+        } else if (result == PinVerificationResult.lockedOut) {
+          emit(state.copyWith(
+            currentInput: '',
+            hasError: true,
+            isLockedOut: true,
+            remainingAttempts: 0,
+            errorMessage: 'Too many incorrect attempts. Session terminated.',
+          ));
+        } else {
+          final remaining = await _pinRepository.getRemainingAttempts();
+          final attemptsText = remaining == 1 ? '1 attempt left' : '$remaining attempts left';
+          emit(state.copyWith(
+            currentInput: '',
+            hasError: true,
+            remainingAttempts: remaining,
+            errorMessage: 'Incorrect PIN — $attemptsText',
+          ));
+        }
+      } else if (state.flowMode == PinFlowMode.change && state.step == 0) {
+        // Verifying old PIN
+        final result = await _pinRepository.verifyPin(input);
+        if (result == PinVerificationResult.success) {
+          emit(state.copyWith(
+            step: 1,
+            currentInput: '',
+            firstPinInput: '',
+            hasError: false,
+            errorMessage: null,
+          ));
+        } else if (result == PinVerificationResult.lockedOut) {
+          emit(state.copyWith(
+            currentInput: '',
+            hasError: true,
+            isLockedOut: true,
+            remainingAttempts: 0,
+            errorMessage: 'Too many incorrect attempts. Session terminated.',
+          ));
+        } else {
+          final remaining = await _pinRepository.getRemainingAttempts();
+          emit(state.copyWith(
+            currentInput: '',
+            hasError: true,
+            remainingAttempts: remaining,
+            errorMessage: 'Incorrect current PIN. Try again.',
+          ));
+        }
+      } else if (state.step == 1) {
+        // Step 1: Record first PIN entry and proceed to Step 2 confirmation
         emit(state.copyWith(
+          step: 2,
+          firstPinInput: input,
           currentInput: '',
-          hasError: true,
-          isLockedOut: true,
-          remainingAttempts: 0,
-          errorMessage: 'Too many incorrect attempts. Session terminated.',
-        ));
-      } else {
-        final remaining = await _pinRepository.getRemainingAttempts();
-        final attemptsText = remaining == 1 ? '1 attempt left' : '$remaining attempts left';
-        emit(state.copyWith(
-          currentInput: '',
-          hasError: true,
-          remainingAttempts: remaining,
-          errorMessage: 'Incorrect PIN — $attemptsText',
-        ));
-      }
-    } else if (state.flowMode == PinFlowMode.change && state.step == 0) {
-      // Verifying old PIN
-      final result = await _pinRepository.verifyPin(input);
-      if (result == PinVerificationResult.success) {
-        emit(state.copyWith(
-          step: 1,
-          currentInput: '',
-          firstPinInput: '',
           hasError: false,
           errorMessage: null,
         ));
-      } else if (result == PinVerificationResult.lockedOut) {
-        emit(state.copyWith(
-          currentInput: '',
-          hasError: true,
-          isLockedOut: true,
-          remainingAttempts: 0,
-          errorMessage: 'Too many incorrect attempts. Session terminated.',
-        ));
-      } else {
-        final remaining = await _pinRepository.getRemainingAttempts();
-        emit(state.copyWith(
-          currentInput: '',
-          hasError: true,
-          remainingAttempts: remaining,
-          errorMessage: 'Incorrect current PIN. Try again.',
-        ));
+      } else if (state.step == 2) {
+        // Step 2: Confirm PIN
+        if (input == state.firstPinInput) {
+          await _pinRepository.savePin(input);
+          emit(state.copyWith(isCompleted: true));
+        } else {
+          emit(state.copyWith(
+            step: 1,
+            firstPinInput: '',
+            currentInput: '',
+            hasError: true,
+            errorMessage: 'PINs do not match. Try again.',
+          ));
+        }
       }
-    } else if (state.step == 1) {
-      // Step 1: Record first PIN entry and proceed to Step 2 confirmation
+    } catch (e) {
       emit(state.copyWith(
-        step: 2,
-        firstPinInput: input,
         currentInput: '',
-        hasError: false,
-        errorMessage: null,
+        hasError: true,
+        errorMessage: 'An error occurred. Please try again.',
       ));
-    } else if (state.step == 2) {
-      // Step 2: Confirm PIN
-      if (input == state.firstPinInput) {
-        await _pinRepository.savePin(input);
-        emit(state.copyWith(isCompleted: true));
-      } else {
-        emit(state.copyWith(
-          step: 1,
-          firstPinInput: '',
-          currentInput: '',
-          hasError: true,
-          errorMessage: 'PINs do not match. Try again.',
-        ));
-      }
     }
   }
 

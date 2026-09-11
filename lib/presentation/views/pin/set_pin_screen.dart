@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../domain/repositories/pin_repository.dart';
 import '../../viewmodels/pin/pin_cubit.dart';
 import '../../viewmodels/pin/pin_state.dart';
 import '../../widgets/numeric_keypad.dart';
 import '../../widgets/pin_dots_indicator.dart';
 
-class SetPinScreen extends StatefulWidget {
+class SetPinScreen extends StatelessWidget {
   final PinFlowMode flowMode;
 
   const SetPinScreen({
@@ -15,16 +16,24 @@ class SetPinScreen extends StatefulWidget {
   });
 
   @override
-  State<SetPinScreen> createState() => _SetPinScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider<PinCubit>(
+      create: (ctx) => PinCubit(ctx.read<PinRepository>())..initFlow(flowMode),
+      child: _SetPinView(flowMode: flowMode),
+    );
+  }
 }
 
-class _SetPinScreenState extends State<SetPinScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<PinCubit>().initFlow(widget.flowMode);
-  }
+class _SetPinView extends StatefulWidget {
+  final PinFlowMode flowMode;
 
+  const _SetPinView({required this.flowMode});
+
+  @override
+  State<_SetPinView> createState() => _SetPinViewState();
+}
+
+class _SetPinViewState extends State<_SetPinView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

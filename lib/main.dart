@@ -159,41 +159,49 @@ class VaultApp extends StatelessWidget {
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(
           builder: (context, themeMode) {
-            return AppLifecyclePinBarrier(
-              child: MaterialApp(
-                title: 'VAULT',
-                navigatorKey: rootNavigatorKey,
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeMode,
-                initialRoute: '/',
-                onGenerateRoute: (settings) {
-                  switch (settings.name) {
-                    case '/':
-                      return MaterialPageRoute(builder: (_) => const SplashScreen());
-                    case '/intro':
-                      return MaterialPageRoute(builder: (_) => const IntroScreen());
-                    case '/login':
-                      return MaterialPageRoute(builder: (_) => const LoginScreen());
-                    case '/profile':
-                      return MaterialPageRoute(builder: (_) => const ProfileScreen());
-                    case '/settings':
-                      return MaterialPageRoute(builder: (_) => const SettingsScreen());
-                    case '/set_pin':
-                      final flowMode = (settings.arguments as PinFlowMode?) ?? PinFlowMode.create;
-                      return MaterialPageRoute(
-                        builder: (_) => SetPinScreen(flowMode: flowMode),
-                      );
-                    case '/pin_lock':
-                      return MaterialPageRoute(builder: (_) => const PinLockScreen());
-                    case '/compromised':
-                      return MaterialPageRoute(builder: (_) => const DeviceCompromisedScreen());
-                    default:
-                      return MaterialPageRoute(builder: (_) => const SplashScreen());
-                  }
-                },
-              ),
+            return MaterialApp(
+              title: 'VAULT',
+              navigatorKey: rootNavigatorKey,
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
+              initialRoute: '/',
+              builder: (context, child) {
+                return AppLifecyclePinBarrier(
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+              onGenerateRoute: (settings) {
+                switch (settings.name) {
+                  case '/':
+                    return MaterialPageRoute(builder: (_) => const SplashScreen());
+                  case '/intro':
+                    return MaterialPageRoute(builder: (_) => const IntroScreen());
+                  case '/login':
+                    return MaterialPageRoute(builder: (_) => const LoginScreen());
+                  case '/profile':
+                    return MaterialPageRoute(builder: (_) => const ProfileScreen());
+                  case '/settings':
+                    return MaterialPageRoute(builder: (_) => const SettingsScreen());
+                  case '/set_pin':
+                    final flowMode = (settings.arguments as PinFlowMode?) ?? PinFlowMode.create;
+                    return MaterialPageRoute(
+                      builder: (_) => SetPinScreen(flowMode: flowMode),
+                    );
+                  case '/pin_lock':
+                    return MaterialPageRoute(
+                      builder: (ctx) => BlocProvider<PinCubit>(
+                        create: (c) => PinCubit(c.read<PinRepository>()),
+                        child: const PinLockScreen(),
+                      ),
+                    );
+                  case '/compromised':
+                    return MaterialPageRoute(builder: (_) => const DeviceCompromisedScreen());
+                  default:
+                    return MaterialPageRoute(builder: (_) => const SplashScreen());
+                }
+              },
             );
           },
         ),

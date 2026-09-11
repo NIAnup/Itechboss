@@ -14,9 +14,9 @@ class RootJailbreakService {
 
     try {
       final bool isJailbroken = await SafeDevice.isJailBroken;
-      final bool isDevelopmentMode = await SafeDevice.isDevelopmentModeEnable;
-      return isJailbroken || isDevelopmentMode;
+      return isJailbroken;
     } catch (e) {
+      debugPrint('SafeDevice check error: $e');
       return false;
     }
   }

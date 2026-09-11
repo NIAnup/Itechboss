@@ -44,7 +44,7 @@ class _PinDotsIndicatorState extends State<PinDotsIndicator>
   @override
   void didUpdateWidget(covariant PinDotsIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.hasError && !oldWidget.hasError) {
+    if (widget.hasError && (!oldWidget.hasError || widget.currentLength == 0)) {
       _shakeController.forward(from: 0.0);
     }
   }

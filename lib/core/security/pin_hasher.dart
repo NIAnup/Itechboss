@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:pointycastle/export.dart';
@@ -18,18 +19,20 @@ class PinHasher {
     return salt;
   }
 
-  /// Hashes a 6-digit PIN using PBKDF2-HMAC-SHA256 with 100,000 iterations
+  /// Hashes a 6-digit PIN using PBKDF2-HMAC-SHA256 with 100,000 iterations in a worker isolate
   Future<Uint8List> hashPin({
     required String pin,
     required Uint8List salt,
   }) async {
-    final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2')
-      ..init(Pbkdf2Parameters(salt, iterations, keyLength));
+    return Isolate.run(() {
+      final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2')
+        ..init(Pbkdf2Parameters(salt, iterations, keyLength));
 
-    final pinBytes = Uint8List.fromList(utf8.encode(pin));
-    final derivedKey = derivator.process(pinBytes);
+      final pinBytes = Uint8List.fromList(utf8.encode(pin));
+      final derivedKey = derivator.process(pinBytes);
 
-    return Uint8List.fromList(derivedKey);
+      return Uint8List.fromList(derivedKey);
+    });
   }
 
   /// Verifies a PIN against stored salt and hash in constant time

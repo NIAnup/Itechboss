@@ -10,10 +10,12 @@ import '../../widgets/pin_dots_indicator.dart';
 
 class PinLockScreen extends StatefulWidget {
   final VoidCallback? onUnlocked;
+  final VoidCallback? onLogout;
 
   const PinLockScreen({
     super.key,
     this.onUnlocked,
+    this.onLogout,
   });
 
   @override
@@ -41,7 +43,9 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
   Future<void> _onLogoutInstead() async {
     await context.read<AuthRepository>().logout();
-    if (mounted) {
+    if (widget.onLogout != null) {
+      widget.onLogout!();
+    } else if (mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
@@ -67,7 +71,11 @@ class _PinLockScreenState extends State<PinLockScreen> {
                 backgroundColor: AppColors.errorRed,
               ),
             );
-            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            if (widget.onLogout != null) {
+              widget.onLogout!();
+            } else {
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            }
           }
         },
         builder: (context, state) {
