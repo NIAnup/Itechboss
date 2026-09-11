@@ -142,8 +142,31 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
                           const SizedBox(height: 18),
 
-                          // Error / Remaining Attempts text
-                          if (state.hasError && state.errorMessage != null)
+                          // Processing Loader, Error / Remaining Attempts text
+                          if (state.isProcessing)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF0284C7),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Unlocking...',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.textPrimaryDark : const Color(0xFF0284C7),
+                                  ),
+                                ),
+                              ],
+                            )
+                          else if (state.hasError && state.errorMessage != null)
                             Text(
                               state.errorMessage!,
                               textAlign: TextAlign.center,
